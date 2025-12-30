@@ -1,5 +1,6 @@
 import express, { Application, Request, Response } from 'express'
 import cors from 'cors'
+import cookieParser from 'cookie-parser'
 import dotenv from 'dotenv'
 import contentstackRoutes from './routes/contentstack.routes'
 
@@ -10,7 +11,11 @@ const app: Application = express()
 const PORT = process.env.PORT || 3000
 
 // Middleware
-app.use(cors())
+app.use(cors({
+  origin: true, // Allow all origins (or specify your client origin)
+  credentials: true // Allow cookies to be sent
+}))
+app.use(cookieParser())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 

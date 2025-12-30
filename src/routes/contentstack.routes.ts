@@ -151,7 +151,7 @@ router.get('/entrybyurl', async (req: Request, res: Response) => {
  */
 router.get('/personalize-sdk', async (req: Request, res: Response) => {
   try {
-    const { userAttributes, userId } = req.query
+    const { userAttributes } = req.query
     const projectUid = process.env.CONTENTSTACK_PERSONALIZE_PROJECT_UID as string
     const edgeUrl = process.env.CONTENTSTACK_PERSONALIZE_EDGE_API_URL as string
     // Parse user attributes if provided
@@ -177,6 +177,21 @@ router.get('/personalize-sdk', async (req: Request, res: Response) => {
     // Get serializable SDK data
     const sdkData = getPersonalizationSDKData(personalizeSdk)
     console.log('sdkData', sdkData)
+    
+    // Get or create anonymous user ID (this also sets a cookie)
+    const anonymousUserId = getOrCreateAnonId(req, res)
+    
+    // Set additional cookie with personalization data for client application
+    
+    const isProduction = process.env.NODE_ENV === 'production'
+    res.cookie('cs-personalize-user-uid', anonymousUserId, {
+      httpOnly: false,        // Allow JS to read it
+      secure: isProduction,   // Secure in production (false for localhost)
+      sameSite: isProduction ? 'lax' : 'lax', // Use 'lax' for both - works for same-origin and top-level navigation
+      path: '/',
+      maxAge: 1000 * 60 * 60 * 24 * 365 // 1 year
+    })
+    
     // Return the initialized SDK instance data
     // Note: The SDK instance itself cannot be serialized to JSON,
     // so we return all the serializable data that the client needs
@@ -184,7 +199,7 @@ router.get('/personalize-sdk', async (req: Request, res: Response) => {
       success: true,
       projectUid,
       edgeUrl,
-      userId: getOrCreateAnonId(req, res),
+      userId: anonymousUserId,
       attributes: userAttributes ?? {}
     })
   } catch (error: any) {
