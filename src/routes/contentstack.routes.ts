@@ -22,6 +22,7 @@ router.get('/entries', async (req: Request, res: Response) => {
     const { contentTypeUid, locale, referenceFieldPath, jsonRtePath, limit, queryOperator, filterQuery } = req.query
     
     if (!locale || typeof locale !== 'string') {
+      console.log('local is missing', locale)
       return res.status(400).json({ 
         error: 'Missing required parameter: locale' 
       })
@@ -93,7 +94,6 @@ router.get('/entries', async (req: Request, res: Response) => {
 router.get('/entrybyurl', async (req: Request, res: Response) => {
   try {
     const { contentTypeUid, locale, entryUrl, referenceFieldPath, jsonRtePath } = req.query
-    
     if (!locale || typeof locale !== 'string') {
       return res.status(400).json({ 
         error: 'Missing required parameter: locale' 
@@ -151,35 +151,41 @@ router.get('/entrybyurl', async (req: Request, res: Response) => {
  */
 router.get('/personalize-sdk', async (req: Request, res: Response) => {
   try {
-    const { userAttributes } = req.query
+    console.log('req cookies', req.cookies)
+    const { category, subcategory } = req.query
     const projectUid = process.env.CONTENTSTACK_PERSONALIZE_PROJECT_UID as string
     const edgeUrl = process.env.CONTENTSTACK_PERSONALIZE_EDGE_API_URL as string
     // Parse user attributes if provided
     let parsedUserAttributes: Record<string, any> | undefined
-    if (userAttributes) {
+    if (category && subcategory) {
       try {
-        parsedUserAttributes = JSON.parse(userAttributes as string)
+        parsedUserAttributes = {
+          category,
+          subcategory
+        }
+        console.log('parsedUserAttributes', parsedUserAttributes)
       } catch (e) {
         return res.status(400).json({ 
           error: 'Invalid userAttributes JSON format' 
         })
       }
     }
-
+    const anonymousUserId = getOrCreateAnonId(req, res)
+    console.log('anonymousUserId', anonymousUserId)
     // Initialize the personalization SDK
     const personalizeSdk = await initializePersonalizationSDK(
       projectUid,
       edgeUrl,
       req,
-      parsedUserAttributes
+      parsedUserAttributes,
+      anonymousUserId
     )
-
+    
     // Get serializable SDK data
     const sdkData = getPersonalizationSDKData(personalizeSdk)
     console.log('sdkData', sdkData)
     
     // Get or create anonymous user ID (this also sets a cookie)
-    const anonymousUserId = getOrCreateAnonId(req, res)
     
     // Set additional cookie with personalization data for client application
     
@@ -200,7 +206,7 @@ router.get('/personalize-sdk', async (req: Request, res: Response) => {
       projectUid,
       edgeUrl,
       userId: anonymousUserId,
-      attributes: userAttributes ?? {}
+      attributes: parsedUserAttributes ?? {}
     })
   } catch (error: any) {
     console.error('Error initializing personalization SDK:', error)
