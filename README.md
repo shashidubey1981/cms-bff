@@ -8,12 +8,10 @@ A Backend for Frontend (BFF) application built with Node.js, Express, and TypeSc
 - 📦 TypeScript support
 - 🔌 Contentstack CMS integration
 - 🎯 Entry fetching by content type
-- 🔍 Entry fetching by URL
 - 🌐 Multi-locale support
-- 📝 JSON RTE to HTML conversion
+- 📝 JSON RTE and reference field configuration via `pageReference`
 - 🏷️ Editable tags support (Live Preview)
-- 🔄 Reference field inclusion
-- 🎨 Personalization support
+- 🔄 Reference field inclusion (hero, teaser, navigation, footer, etc.)
 
 ## Prerequisites
 
@@ -77,87 +75,27 @@ Returns server health status.
 
 ### Get Entries
 ```
-GET /api/contentstack/entries/:contentTypeUid
+GET /api/entries
 ```
 
 **Parameters:**
-- `contentTypeUid` (path): Content type UID
+- `contentTypeUid` (query, required): Content type UID
 - `locale` (query, required): Locale code (e.g., `en-us`)
-- `referenceFieldPath` (query, optional): Comma-separated reference field paths
-- `jsonRtePath` (query, optional): Comma-separated JSON RTE field paths
 - `limit` (query, optional): Limit number of entries
 - `queryOperator` (query, optional): Query operator (`or`)
 - `filterQuery` (query, optional): JSON string for filtering
 
+Reference fields and JSON RTE paths are configured in `src/utils/pageReference.ts` (e.g. hero, teaser, navigation, footer) and are applied when fetching entries.
+
 **Example:**
 ```bash
-curl "http://localhost:3000/api/entries/blog_post?locale=en-us&limit=10"
+curl "http://localhost:3000/api/entries?contentTypeUid=blog_post&locale=en-us&limit=10"
 ```
 
 **With filters:**
 ```bash
-curl "http://localhost:3000/api/entries/blog_post?locale=en-us&filterQuery={\"key\":\"title\",\"value\":\"My Post\"}"
+curl "http://localhost:3000/api/entries?contentTypeUid=blog_post&locale=en-us&filterQuery={\"key\":\"title\",\"value\":\"My Post\"}"
 ```
-
-### Get Entry by URL
-```
-GET /api/entry/:contentTypeUid
-```
-
-**Parameters:**
-- `contentTypeUid` (path): Content type UID
-- `locale` (query, required): Locale code
-- `entryUrl` (query, required): Entry URL
-- `referenceFieldPath` (query, optional): Comma-separated reference field paths
-- `jsonRtePath` (query, optional): Comma-separated JSON RTE field paths
-
-**Example:**
-```bash
-curl "http://localhost:3000/api/entry/blog_post?locale=en-us&entryUrl=/blog/my-post"
-```
-
-### Get Personalization SDK Instance
-```
-GET /api/personalize-sdk
-```
-
-Initialize and return personalization SDK instance for MFE (Micro Frontend).
-
-**Parameters:**
-- `projectUid` (query, required): Contentstack Personalize project UID
-- `userAttributes` (query, optional): JSON string of user attributes for personalization
-
-**Example:**
-```bash
-# Basic request
-curl "http://localhost:3000/api/personalize-sdk?projectUid=your_project_uid"
-
-# With user attributes
-curl "http://localhost:3000/api/personalize-sdk?projectUid=your_project_uid&userAttributes={\"age\":30,\"location\":\"US\"}"
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "variantAliases": ["variant1", "variant2"],
-    "experiences": [...],
-    "variantIds": "variant1,variant2",
-    "sdkInitialized": true,
-    "projectUid": "your_project_uid",
-    "timestamp": "2024-01-01T00:00:00.000Z"
-  },
-  "personalizeSdk": {
-    "initialized": true,
-    "variantAliases": ["variant1", "variant2"],
-    "experiences": [...],
-    "variantIds": "variant1,variant2"
-  }
-}
-```
-
-**Note:** The SDK instance is initialized server-side. The response includes all serializable data (variant aliases, experiences) that the client needs for personalization.
 
 ## Project Structure
 
@@ -165,15 +103,16 @@ curl "http://localhost:3000/api/personalize-sdk?projectUid=your_project_uid&user
 tb-node-bff-cms/
 ├── src/
 │   ├── config/
-│   │   └── index.ts          # Contentstack Stack configuration
+│   │   └── index.ts               # Contentstack Stack configuration
 │   ├── routes/
-│   │   └── contentstack.routes.ts  # API routes
+│   │   └── contentstack.routes.ts # API routes
 │   ├── utils/
-│   │   ├── index.ts          # Utility functions
-│   │   └── personalization.ts # Personalization SDK utilities
-│   ├── contentstack.ts       # Contentstack helper functions
-│   └── server.ts             # Express server setup
-├── .env.example              # Environment variables template
+│   │   ├── index.ts               # Utility functions
+│   │   ├── pageReference.ts       # Reference & JSON RTE paths for entries
+│   │   └── anonimus.ts
+│   ├── contentstack.ts            # Contentstack helper functions
+│   └── server.ts                  # Express server setup
+├── .env.example                   # Environment variables template
 ├── .gitignore
 ├── package.json
 ├── tsconfig.json
