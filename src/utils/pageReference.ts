@@ -67,7 +67,10 @@ export const pagePropsReferenceIncludes = [
 ]
 
 export const pdpPageReferenceIncludes = [
+    'media',
     'details',
+    'marketing',
+    
 
 ]
 

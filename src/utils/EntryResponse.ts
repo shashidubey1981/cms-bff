@@ -242,3 +242,59 @@ export type AccordionItem = {
     content: RichText;
 }
 
+// ---------------------------------------------------------------------------
+// Raw Contentstack entry shape (adjust keys to match your CS content type)
+// ---------------------------------------------------------------------------
+export type RawPageEntry = Record<string, unknown> & {
+    url?: string;
+    taxonomies?: Taxonomy[] | unknown[];
+    components?: PageBlock[] | unknown[];
+    hero?: Hero[] | unknown[];
+    seo?: Partial<SeoProps> | unknown;
+    media?: Media[] | unknown[];
+    details?: PDPPageBlock[] | unknown[];
+    marketing?: PDPPageBlock[] | unknown[];
+};
+
+const defaultSeo: SeoProps = {
+    title: '',
+    description: '',
+    canonical_url: '',
+    no_follow: false,
+    no_index: false,
+};
+
+/** Safely cast array or default to empty array */
+function toArray<T>(value: unknown, guard?: (item: unknown) => item is T): T[] {
+    if (Array.isArray(value)) {
+        return guard ? value.filter(guard) : (value as T[]);
+    }
+    return [];
+}
+
+/**
+ * Transform a raw Contentstack page entry into the typed PageProps shape.
+ * Adjust field mappings below to match your actual Contentstack schema keys.
+ */
+export function transformEntryToPageProps(raw: RawPageEntry): PageProps {
+    return {
+        url: typeof raw?.url === 'string' ? raw.url : '',
+        taxonomies: toArray<Taxonomy>(raw?.taxonomies),
+        components: toArray<PageBlock>(raw?.components),
+        hero: toArray<Hero>(raw?.hero),
+        seo: raw?.seo && typeof raw.seo === 'object' && !Array.isArray(raw.seo)
+            ? { ...defaultSeo, ...(raw.seo as Partial<SeoProps>) }
+            : defaultSeo,
+        media: toArray<Media>(raw?.media),
+        details: toArray<PDPPageBlock>(raw?.details),
+        marketing: toArray<PDPPageBlock>(raw?.marketing),
+    };
+}
+
+/**
+ * Transform an array of raw entries to PageProps[].
+ */
+export function transformEntriesToPageProps(rawEntries: RawPageEntry[]): PageProps[] {
+    return rawEntries.map(transformEntryToPageProps);
+}
+

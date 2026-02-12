@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { getEntries } from '../contentstack'
-import { PageProps } from '../utils/EntryResponse'
+import { PageProps, transformEntriesToPageProps, RawPageEntry } from '../utils/EntryResponse'
 
 const router = Router()
 
@@ -56,14 +56,19 @@ router.get('/entries', async (req: Request, res: Response) => {
       }
     }
 
-    const entries = await getEntries(
+    const rawEntries = await getEntries<RawPageEntry>(
       contentTypeUid as string,
-      locale as string) as PageProps[]
+      locale as string
+    )
+
+    const entries: PageProps[] = rawEntries
+      ? transformEntriesToPageProps(rawEntries)
+      : []
 
     res.json({
       success: true,
       data: entries,
-      count: entries?.length || 0
+      count: entries.length
     })
   } catch (error: any) {
     console.error('Error fetching entries:', error)

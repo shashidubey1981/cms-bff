@@ -33,8 +33,6 @@ export const getEntries = async <T>(contentTypeUid: string, locale: string) => {
 
         if (entryQuery) {
             result = await entryQuery
-                .addParams({'include_metadata': 'true'})
-                .addParams({'include_applied_variants': 'true'})
                 .find() as { entries: T[] }
 
             const data = result?.entries
