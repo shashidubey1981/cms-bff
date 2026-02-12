@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { getEntries } from '../contentstack'
+import { PageProps } from '../utils/EntryResponse'
 
 const router = Router()
 
@@ -57,7 +58,7 @@ router.get('/entries', async (req: Request, res: Response) => {
 
     const entries = await getEntries(
       contentTypeUid as string,
-      locale as string)
+      locale as string) as PageProps[]
 
     res.json({
       success: true,

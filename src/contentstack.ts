@@ -2,6 +2,7 @@ import _ from 'lodash'
 import { EmbeddedItem } from '@contentstack/utils/dist/types/Models/embedded-object'
 import { getStack } from './config'
 import { pageEntryReferenceIncludes } from './utils/pageReference'
+import { PageProps } from './utils/EntryResponse'
 
 /**
   *
@@ -19,7 +20,7 @@ export const getEntries = async <T>(contentTypeUid: string, locale: string) => {
         const Stack = getStack()
         if(!Stack) {
             throw new Error('===== No stack initialization found====== \n check environment variables: \
-            CONTENTSTACK_API_KEY, CONTENTSTACK_DELIVERY_TOKEN, CONTENTSTACK_PREVIEW_TOKEN, CONTENTSTACK_PREVIEW_HOST, CONTENTSTACK_ENVIRONMENT')
+            CONTENTSTACK_API_KEY, CONTENTSTACK_DELIVERY_TOKEN')
         }
         const entryQuery = Stack.contentType(contentTypeUid)
             .entry()
@@ -36,7 +37,7 @@ export const getEntries = async <T>(contentTypeUid: string, locale: string) => {
                 .addParams({'include_applied_variants': 'true'})
                 .find() as { entries: T[] }
 
-            const data = result?.entries as EmbeddedItem[]
+            const data = result?.entries
 
             if (data && _.isEmpty(data?.[0])) {
                 throw '404 | Not found'
